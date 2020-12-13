@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Awesome App</string>
+    <string name="error_in_retrieving_data">Error in retrieving data</string>
 </resources>
