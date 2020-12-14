@@ -10,11 +10,14 @@ data class CuratedPhoto(
     val page: Int,
 
     @JsonProperty("per_page")
-    val perPage: Int,
+    val per_page: Int,
 
     @JsonProperty("photos")
     val photos: List<CuratedPhotoResult>,
 
+    @JsonProperty("total_results")
+    val total_results: Int,
+
     @JsonProperty("next_page")
-    val nextPage: String
+    val next_page: String
 )
