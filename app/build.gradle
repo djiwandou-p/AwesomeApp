@@ -16,7 +16,7 @@ android {
         targetSdkVersion 30
         versionCode 1
         versionName "1.0"
-        testInstrumentationRunner "com.dev.ccodetest.app.CustomInstrumentationRunner"
+        testInstrumentationRunner "com.mylektop.awesomeapp.app.CustomInstrumentationRunner"
         multiDexEnabled true
         buildConfigField "String", "BASE_URL", "\"https://api.pexels.com/v1/\""
     }
