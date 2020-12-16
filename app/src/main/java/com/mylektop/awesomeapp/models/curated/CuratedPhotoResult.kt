@@ -27,6 +27,9 @@ data class CuratedPhotoResult(
     @JsonProperty("photographer_id")
     val photographerId: Int,
 
+    @JsonProperty("avg_color")
+    val avg_color: String,
+
     @JsonProperty("src")
     val src: CuratedPhotoResultSrc,
 

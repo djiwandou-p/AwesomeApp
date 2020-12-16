@@ -8,7 +8,9 @@ import android.view.View
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.mylektop.awesomeapp.R
+import com.mylektop.awesomeapp.constants.VIEW_TYPE_RECYCLERVIEW_LIST
 import com.mylektop.awesomeapp.models.curated.CuratedPhoto
 import com.mylektop.awesomeapp.models.curated.CuratedPhotoResult
 import com.mylektop.awesomeapp.platform.BaseFragment
@@ -24,21 +26,16 @@ import org.koin.android.ext.android.inject
  * Fires rest api initiation.
  * Created by iddangunawan on 12/13/20
  */
-class CuratedActivityFragment : BaseFragment() {
-
-    companion object {
-        fun getMainActivityFragment() = CuratedActivityFragment()
-    }
+class CuratedActivityFragment : BaseFragment(), CuratedOnItemClickListener {
 
     private val TAG = CuratedActivityFragment::class.java.simpleName
-    val mCuratedUseCase: CuratedUseCase by inject()
+    private val mCuratedUseCase: CuratedUseCase by inject()
     private val mBaseViewModelFactory: BaseViewModelFactory =
         BaseViewModelFactory(Dispatchers.Main, Dispatchers.IO, mCuratedUseCase)
     lateinit var mRecyclerViewAdapter: CuratedRecyclerViewAdapter
 
     private val mViewModel: CuratedActivityViewModel by lazy {
-        ViewModelProviders.of(this, mBaseViewModelFactory)
-            .get(CuratedActivityViewModel::class.java)
+        ViewModelProviders.of(this, mBaseViewModelFactory).get(CuratedActivityViewModel::class.java)
     }
 
     override fun getLayoutId(): Int = R.layout.fragment_curated_activity
@@ -47,14 +44,22 @@ class CuratedActivityFragment : BaseFragment() {
         super.onActivityCreated(savedInstanceState)
 
         //Start observing the targets
-        this.mViewModel.mCuratedPhotoResponse.observe(this, this.mDataObserver)
-        this.mViewModel.mLoadingLiveData.observe(this, this.loadingObserver)
+        this.mViewModel.mCuratedPhotoResponse.observe(viewLifecycleOwner, this.mDataObserver)
+        this.mViewModel.mLoadingLiveData.observe(viewLifecycleOwner, this.loadingObserver)
 
-        mRecyclerViewAdapter = CuratedRecyclerViewAdapter(activity!!, arrayListOf())
+        val bundle = arguments
+        val viewTypeRecyclerViewList = bundle?.getBoolean(VIEW_TYPE_RECYCLERVIEW_LIST) ?: true
+
+        mRecyclerViewAdapter =
+            CuratedRecyclerViewAdapter(activity!!, arrayListOf(), viewTypeRecyclerViewList, this)
         landingListRecyclerView.adapter = mRecyclerViewAdapter
-        landingListRecyclerView.layoutManager = LinearLayoutManager(activity!!)
+        landingListRecyclerView.layoutManager =
+            if (viewTypeRecyclerViewList)
+                LinearLayoutManager(activity!!)
+            else
+                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
 
-        this.mViewModel.requestCuratedActivityData(10, 1)
+        this.mViewModel.requestCuratedActivityData(15, 1)
     }
 
     private val mDataObserver = Observer<LiveDataWrapper<CuratedPhoto>> { result ->
@@ -106,5 +111,9 @@ class CuratedActivityFragment : BaseFragment() {
         } else {
             progress_circular.visibility = View.INVISIBLE
         }
+    }
+
+    override fun onItemClick(curatedPhotoResult: CuratedPhotoResult) {
+        Log.d(TAG, "Go to detail ${curatedPhotoResult.photographer}")
     }
 }

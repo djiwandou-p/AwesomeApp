@@ -2,7 +2,7 @@
 <com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/mainItemView"
+    android:id="@+id/mainItemView2"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/margin_8"
@@ -15,31 +15,31 @@
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal">
+        android:orientation="vertical">
 
         <ImageView
-            android:id="@+id/srcPhoto"
-            android:layout_width="@dimen/margin_80"
-            android:layout_height="@dimen/margin_80"
+            android:id="@+id/srcPhoto2"
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/margin_200"
             android:clickable="true"
             android:focusable="true"
             android:scaleType="centerCrop" />
 
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="vertical"
             android:padding="@dimen/margin_8">
 
             <TextView
-                android:id="@+id/photographer"
+                android:id="@+id/photographer2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="14sp"
                 tools:text="Kasuma" />
 
             <TextView
-                android:id="@+id/photographerUrl"
+                android:id="@+id/photographerUrl2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
