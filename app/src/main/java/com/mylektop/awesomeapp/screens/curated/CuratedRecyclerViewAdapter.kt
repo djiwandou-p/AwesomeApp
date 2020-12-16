@@ -5,6 +5,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
@@ -23,69 +24,98 @@ class CuratedRecyclerViewAdapter(
     private val curatedOnItemClickListener: CuratedOnItemClickListener
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
+    companion object {
+        const val VIEW_TYPE_ITEM = 0
+        const val VIEW_TYPE_LOADING = 1
+    }
+
     var mItemList = list
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-        return if (viewTypeRecyclerViewList)
-            CuratedFragListViewHolder(
-                LayoutInflater.from(context).inflate(R.layout.landing_list_view_item, parent, false)
+        if (viewType == VIEW_TYPE_ITEM) {
+            return if (viewTypeRecyclerViewList)
+                CuratedFragListViewHolder(
+                    LayoutInflater.from(context)
+                        .inflate(R.layout.landing_list_view_item, parent, false)
+                )
+            else
+                CuratedFragGridViewHolder(
+                    LayoutInflater.from(context)
+                        .inflate(R.layout.landing_grid_view_item, parent, false)
+                )
+        } else {
+            return CuratedFragLoadingViewHolder(
+                LayoutInflater.from(context)
+                    .inflate(R.layout.landing_loading_item, parent, false)
             )
-        else
-            CuratedFragGridViewHolder(
-                LayoutInflater.from(context).inflate(R.layout.landing_grid_view_item, parent, false)
-            )
+        }
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val model: CuratedPhotoResult = mItemList[position]
+        if (holder is CuratedFragListViewHolder || holder is CuratedFragGridViewHolder) {
+            val model: CuratedPhotoResult = mItemList[position]
 
-        if (viewTypeRecyclerViewList) {
-            val viewHolderList = holder as CuratedFragListViewHolder
+            if (viewTypeRecyclerViewList) {
+                val viewHolderList = holder as CuratedFragListViewHolder
 
-            Glide.with(context).load(model.src.tiny)
-                .fallback(android.R.drawable.stat_notify_error)
-                .timeout(4500)
-                .into(viewHolderList.srcPhoto)
+                Glide.with(context).load(model.src.tiny)
+                    .fallback(android.R.drawable.stat_notify_error)
+                    .timeout(4500)
+                    .into(viewHolderList.srcPhoto)
 
-            viewHolderList.photographer.text = model.photographer
-            viewHolderList.photographerUrl.text = model.photographer_url
+                viewHolderList.photographer.text = model.photographer
+                viewHolderList.photographerUrl.text = model.photographer_url
 
-            viewHolderList.srcPhoto.setOnClickListener {
-                curatedOnItemClickListener.onItemClick(model)
+                viewHolderList.srcPhoto.setOnClickListener {
+                    curatedOnItemClickListener.onItemClick(model)
+                }
+
+                viewHolderList.mainItemView.setOnClickListener {
+                    curatedOnItemClickListener.onItemClick(model)
+                }
+            } else {
+                val viewHolderGrid = holder as CuratedFragGridViewHolder
+
+                Glide.with(context).load(model.src.large)
+                    .fallback(android.R.drawable.stat_notify_error)
+                    .timeout(4500)
+                    .into(viewHolderGrid.srcPhoto)
+
+                viewHolderGrid.photographer.text = model.photographer
+                viewHolderGrid.photographerUrl.text = model.photographer_url
+
+                viewHolderGrid.srcPhoto.setOnClickListener {
+                    curatedOnItemClickListener.onItemClick(model)
+                }
+
+                viewHolderGrid.mainItemView.setOnClickListener {
+                    curatedOnItemClickListener.onItemClick(model)
+                }
             }
-
-            viewHolderList.mainItemView.setOnClickListener {
-                curatedOnItemClickListener.onItemClick(model)
-            }
-        } else {
-            val viewHolderGrid = holder as CuratedFragGridViewHolder
-
-            Glide.with(context).load(model.src.large)
-                .fallback(android.R.drawable.stat_notify_error)
-                .timeout(4500)
-                .into(viewHolderGrid.srcPhoto)
-
-            viewHolderGrid.photographer.text = model.photographer
-            viewHolderGrid.photographerUrl.text = model.photographer_url
-
-            viewHolderGrid.srcPhoto.setOnClickListener {
-                curatedOnItemClickListener.onItemClick(model)
-            }
-
-            viewHolderGrid.mainItemView.setOnClickListener {
-                curatedOnItemClickListener.onItemClick(model)
-            }
+//            populateItemRows(viewHolder as ItemViewHolder?, position)
+        } else if (holder is CuratedFragLoadingViewHolder) {
+//            showLoadingView(viewHolder as LoadingViewHolder?, position)
         }
     }
 
     override fun getItemCount(): Int {
-        return mItemList.size
+        return if (mItemList == null) 0 else mItemList.size
+    }
+
+    override fun getItemViewType(position: Int): Int {
+        return if (mItemList[position] == null) VIEW_TYPE_LOADING else VIEW_TYPE_ITEM
     }
 
     fun updateListItems(updatedList: ArrayList<CuratedPhotoResult>) {
         mItemList.clear()
         mItemList = updatedList
         notifyDataSetChanged()
+    }
+
+    fun addListItems(addList: ArrayList<CuratedPhotoResult>) {
+        val lastIndex = addList.size - 1
+        mItemList.addAll(addList)
+        notifyItemRangeInserted(lastIndex, addList.size)
     }
 
     class CuratedFragListViewHolder(item: View) : RecyclerView.ViewHolder(item) {
@@ -100,5 +130,9 @@ class CuratedRecyclerViewAdapter(
         val srcPhoto: ImageView = item.findViewById(R.id.srcPhoto2)
         val photographer: TextView = item.findViewById(R.id.photographer2)
         val photographerUrl: TextView = item.findViewById(R.id.photographerUrl2)
+    }
+
+    class CuratedFragLoadingViewHolder(item: View) : RecyclerView.ViewHolder(item) {
+        val progressBar: ProgressBar = item.findViewById(R.id.progressBar)
     }
 }

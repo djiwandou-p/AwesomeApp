@@ -1,5 +1,6 @@
 package com.mylektop.awesomeapp.screens.curated
 
+import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -8,8 +9,13 @@ import android.view.View
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
+import com.mylektop.awesomeapp.MainActivity
 import com.mylektop.awesomeapp.R
+import com.mylektop.awesomeapp.constants.PHOTOGRAPHER
+import com.mylektop.awesomeapp.constants.PHOTOGRAPHER_URL
+import com.mylektop.awesomeapp.constants.SRC_PHOTO
 import com.mylektop.awesomeapp.constants.VIEW_TYPE_RECYCLERVIEW_LIST
 import com.mylektop.awesomeapp.models.curated.CuratedPhoto
 import com.mylektop.awesomeapp.models.curated.CuratedPhotoResult
@@ -38,6 +44,18 @@ class CuratedActivityFragment : BaseFragment(), CuratedOnItemClickListener {
         ViewModelProviders.of(this, mBaseViewModelFactory).get(CuratedActivityViewModel::class.java)
     }
 
+    private var listItems: ArrayList<CuratedPhotoResult> = arrayListOf()
+
+    // initialise loading state
+    private var mIsLoading = false
+    private var mIsLastPage = false
+
+    // amount of items you want to load per page
+    private var pageSize = 15
+    private var mCurrentPage = 1
+
+    private var isFirstPage = false
+
     override fun getLayoutId(): Int = R.layout.fragment_curated_activity
 
     override fun onActivityCreated(savedInstanceState: Bundle?) {
@@ -58,8 +76,59 @@ class CuratedActivityFragment : BaseFragment(), CuratedOnItemClickListener {
                 LinearLayoutManager(activity!!)
             else
                 StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+        landingListRecyclerView.addOnScrollListener(object : RecyclerView.OnScrollListener() {
+            override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+                super.onScrolled(recyclerView, dx, dy)
 
-        this.mViewModel.requestCuratedActivityData(15, 1)
+                if (viewTypeRecyclerViewList) {
+                    val linearLayoutManager = recyclerView.layoutManager as LinearLayoutManager
+                    // number of visible items
+                    val visibleItemCount: Int = linearLayoutManager.childCount
+                    Log.d("wkwkkw", "visibleItemCount $visibleItemCount")
+                    // number of items in layout
+                    val totalItemCount: Int = linearLayoutManager.itemCount
+                    Log.d("wkwkkw", "totalItemCount $totalItemCount")
+                    // the position of first visible item
+                    val firstVisibleItemPosition: Int =
+                        linearLayoutManager.findFirstVisibleItemPosition()
+                    Log.d("wkwkkw", "firstVisibleItemPosition $firstVisibleItemPosition")
+
+                    val isNotLoadingAndNotLastPage: Boolean = !mIsLoading && !mIsLastPage
+                    Log.d("wkwkkw", "isNotLoadingAndNotLastPage $isNotLoadingAndNotLastPage")
+                    // flag if number of visible items is at the last
+                    val isAtLastItem: Boolean =
+                        firstVisibleItemPosition + visibleItemCount >= totalItemCount
+                    Log.d("wkwkkw", "isAtLastItem $isAtLastItem")
+                    // validate non negative values
+                    val isValidFirstItem: Boolean = firstVisibleItemPosition >= 0
+                    Log.d("wkwkkw", "isValidFirstItem $isValidFirstItem")
+                    // validate total items are more than possible visible items
+                    val totalIsMoreThanVisible: Boolean = totalItemCount >= pageSize
+                    Log.d("wkwkkw", "totalIsMoreThanVisible $totalIsMoreThanVisible")
+                    // flag to know whether to load more
+                    val shouldLoadMore: Boolean =
+                        isValidFirstItem && isAtLastItem && totalIsMoreThanVisible && isNotLoadingAndNotLastPage
+                    Log.d("wkwkkw", "shouldLoadMore $shouldLoadMore")
+
+                    if (shouldLoadMore) loadMoreItems(false)
+                } else {
+                    val staggeredGridLayoutManager =
+                        recyclerView.layoutManager as StaggeredGridLayoutManager?
+                }
+            }
+        })
+
+        // load the first page
+        loadMoreItems(true)
+    }
+
+    private fun loadMoreItems(isFirstPage: Boolean) {
+        this.isFirstPage = isFirstPage
+        // change loading state
+        mIsLoading = true
+        mCurrentPage = mCurrentPage + 1
+
+        this.mViewModel.requestCuratedActivityData(pageSize, mCurrentPage)
     }
 
     private val mDataObserver = Observer<LiveDataWrapper<CuratedPhoto>> { result ->
@@ -80,9 +149,21 @@ class CuratedActivityFragment : BaseFragment(), CuratedOnItemClickListener {
                 Log.d(TAG, "LiveDataResult.Status.SUCCESS = ${result.response}")
 
                 val mainItemReceived = result.response as CuratedPhoto
-                val listItems = mainItemReceived.photos as ArrayList<CuratedPhotoResult>
+                listItems = mainItemReceived.photos as ArrayList<CuratedPhotoResult>
+                val refresh = Handler(Looper.getMainLooper())
 
-                processData(listItems)
+                if (!isFirstPage) {
+                    refresh.post {
+                        mRecyclerViewAdapter.addListItems(listItems)
+                    }
+                } else {
+                    refresh.post {
+                        mRecyclerViewAdapter.updateListItems(listItems)
+                    }
+                }
+
+                mIsLoading = false
+                mIsLastPage = mCurrentPage == mainItemReceived.total_results
             }
         }
     }
@@ -114,6 +195,10 @@ class CuratedActivityFragment : BaseFragment(), CuratedOnItemClickListener {
     }
 
     override fun onItemClick(curatedPhotoResult: CuratedPhotoResult) {
-        Log.d(TAG, "Go to detail ${curatedPhotoResult.photographer}")
+        val intent = Intent(activity?.baseContext, MainActivity::class.java)
+        intent.putExtra(SRC_PHOTO, curatedPhotoResult.src.original)
+        intent.putExtra(PHOTOGRAPHER, curatedPhotoResult.photographer)
+        intent.putExtra(PHOTOGRAPHER_URL, curatedPhotoResult.photographer_url)
+        activity?.startActivity(intent)
     }
 }
