@@ -3,15 +3,20 @@ package com.mylektop.awesomeapp
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import androidx.core.view.ViewCompat
 import com.mylektop.awesomeapp.constants.VIEW_TYPE_RECYCLERVIEW_LIST
 import com.mylektop.awesomeapp.platform.BaseActivity
 import com.mylektop.awesomeapp.screens.curated.CuratedActivityFragment
+import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : BaseActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        toolbar.inflateMenu(R.menu.menu)
+        setSupportActionBar(toolbar)
 
         configureAndShowFragment(true)
     }
