@@ -1,18 +1,12 @@
 package com.mylektop.awesomeapp
 
 import android.os.Bundle
-import android.util.Log
-import android.view.Menu
-import android.view.MenuItem
-import androidx.core.view.ViewCompat
 import com.mylektop.awesomeapp.constants.PHOTOGRAPHER
 import com.mylektop.awesomeapp.constants.PHOTOGRAPHER_URL
 import com.mylektop.awesomeapp.constants.SRC_PHOTO
-import com.mylektop.awesomeapp.constants.VIEW_TYPE_RECYCLERVIEW_LIST
 import com.mylektop.awesomeapp.platform.BaseActivity
 import com.mylektop.awesomeapp.screens.curated.CuratedActivityFragment
 import com.mylektop.awesomeapp.screens.curated.CuratedDetailActivityFragment
-import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : BaseActivity() {
 
@@ -20,10 +14,7 @@ class MainActivity : BaseActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        toolbar.inflateMenu(R.menu.menu)
-        setSupportActionBar(toolbar)
-
-        configureAndShowFragment(true)
+        configureAndShowFragment()
 
         val srcPhoto = intent.getStringExtra(SRC_PHOTO) ?: ""
         val photographer = intent.getStringExtra(PHOTOGRAPHER) ?: ""
@@ -44,33 +35,13 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
-        menuInflater.inflate(R.menu.menu, menu)
-        return true
-    }
-
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        val id = item.itemId
-        if (id == R.id.action_grid) {
-            configureAndShowFragment(false)
-            return true
+    private fun configureAndShowFragment() {
+        val fragment =
+            supportFragmentManager.findFragmentById(R.id.base_frame_layout) as CuratedActivityFragment?
+        if (fragment == null) {
+            supportFragmentManager.beginTransaction()
+                .add(R.id.base_frame_layout, CuratedActivityFragment.getCuratedActivityFragment())
+                .commit()
         }
-        if (id == R.id.action_list) {
-            configureAndShowFragment(true)
-            return true
-        }
-        return super.onOptionsItemSelected(item)
-    }
-
-    private fun configureAndShowFragment(viewTypeRecyclerViewList: Boolean) {
-        val bundle = Bundle()
-        bundle.putBoolean(VIEW_TYPE_RECYCLERVIEW_LIST, viewTypeRecyclerViewList)
-
-        val fragment = CuratedActivityFragment()
-        fragment.arguments = bundle
-
-        supportFragmentManager.beginTransaction()
-            .replace(R.id.base_frame_layout, fragment)
-            .commit()
     }
 }
